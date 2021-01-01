@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+var (
+	appVersion = "1.0.1"
+)
+
 // HTTPTunnel structure handle all the global variables for HTTP Tunnel
 type HTTPTunnel struct {
 	payload    string
@@ -109,7 +113,7 @@ func (tun *HTTPTunnel) getNetData(request string) string {
 }
 func (tun *HTTPTunnel) getRequestProtocol(request string) string {
 	netdata := tun.getNetData(request)
-	return strings.Split(netdata, " ")[0]
+	return strings.Split(netdata, " ")[2]
 }
 func (tun *HTTPTunnel) getHostPort(request string) []string {
 	netdata := tun.getNetData(request)
@@ -225,6 +229,7 @@ func (tun *HTTPTunnel) accept(accept net.Conn) {
 		//netData := tun.getNetData(res)
 		hostPort := tun.getHostPort(req)
 		proto := tun.getRequestProtocol(req)
+
 		if strings.ToLower(tun.tunType) == "http" {
 			proxy, err := net.Dial("tcp", tun.rp)
 			if err != nil {
@@ -269,8 +274,8 @@ func (tun *HTTPTunnel) accept(accept net.Conn) {
 
 func main() {
 	errorMsg := ""
-	fmt.Println("HTTP Tunneling Client")
-	lp := flag.String("lp", "", "Listin Port (required)")
+	fmt.Println("HTTP Tunneling Client by @tsunaweak", appVersion)
+	lp := flag.String("lp", "", "Listen Port (required)")
 	payload := flag.String("payload", "", "HTTP Payload (optional)")
 	rp := flag.String("rp", "", "Remote Proxy [host:port] (optional)")
 	rpAuth := flag.String("auth", "", "Remote Proxy Authentication [user:password] (optional)")
@@ -278,6 +283,13 @@ func main() {
 	sni := flag.String("sni", "", "Server Name Indication (optional)")
 
 	flag.Parse()
+
+	//set expiration date
+	currentTime := time.Now().Local().Unix()
+	expDate := 1610343929
+	if int(currentTime) >= expDate {
+		os.Exit(1)
+	}
 
 	if *lp == "" || *tunType == "" {
 		flag.PrintDefaults()
@@ -316,6 +328,7 @@ func main() {
 			clients:    make(map[*Client]bool),
 			SNI:        *sni,
 		}
+
 		go tun.start()
 
 		if err != nil {
